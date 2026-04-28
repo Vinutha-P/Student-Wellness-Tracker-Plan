@@ -1,0 +1,96 @@
+openapi: 3.0.3
+info:
+  title: Student Wellness Service
+  version: 1.0.0
+servers:
+  - url: http://localhost:4002
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Health check
+      security: []
+      responses:
+        "200": { description: Service healthy }
+  /plans:
+    get:
+      summary: List wellness plans
+      parameters:
+        - in: query
+          name: studentId
+          schema: { type: integer }
+      responses:
+        "200": { description: Plans list }
+    post:
+      summary: Create wellness plan (student)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, category, targetValue, unit, startDate, endDate]
+              properties:
+                title: { type: string }
+                category: { type: string }
+                targetValue: { type: integer }
+                unit: { type: string }
+                startDate: { type: string, format: date }
+                endDate: { type: string, format: date }
+      responses:
+        "201": { description: Plan created }
+  /plans/{id}:
+    put:
+      summary: Update plan
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: Plan updated }
+    delete:
+      summary: Delete plan
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: Plan deleted }
+  /logs:
+    get:
+      summary: List logs
+      responses:
+        "200": { description: Logs list }
+    post:
+      summary: Create daily log (student)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId, logDate]
+              properties:
+                planId: { type: integer }
+                logDate: { type: string, format: date }
+                moodScore: { type: integer, minimum: 1, maximum: 5 }
+                sleepHours: { type: number }
+                waterLiters: { type: number }
+                exerciseMinutes: { type: integer }
+                notes: { type: string }
+      responses:
+        "201": { description: Log created }
+  /dashboard/summary:
+    get:
+      summary: Dashboard stats
+      responses:
+        "200": { description: Summary object }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

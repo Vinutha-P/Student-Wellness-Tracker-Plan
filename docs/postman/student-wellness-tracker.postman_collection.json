@@ -1,0 +1,184 @@
+{
+  "info": {
+    "name": "Student Wellness Tracker APIs",
+    "_postman_id": "e6216dbe-4c9a-4f34-9ccd-3f4865f1dbf8",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "auth_url", "value": "http://localhost:4001" },
+    { "key": "wellness_url", "value": "http://localhost:4002" },
+    { "key": "appointment_url", "value": "http://localhost:4003" },
+    { "key": "token", "value": "" },
+    { "key": "planId", "value": "1" },
+    { "key": "slotId", "value": "1" },
+    { "key": "appointmentId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Signup Student",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{auth_url}}/auth/signup",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Student One\",\n  \"email\": \"student1@example.com\",\n  \"password\": \"Pass@123\",\n  \"role\": \"student\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) { pm.collectionVariables.set('token', json.token); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{auth_url}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"student1@example.com\",\n  \"password\": \"Pass@123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{auth_url}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wellness",
+      "item": [
+        {
+          "name": "Create Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{wellness_url}}/plans",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Sleep Recovery Plan\",\n  \"category\": \"sleep\",\n  \"targetValue\": 7,\n  \"unit\": \"hours/day\",\n  \"startDate\": \"2026-04-29\",\n  \"endDate\": \"2026-05-29\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Plans",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{wellness_url}}/plans"
+          }
+        },
+        {
+          "name": "Create Log",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{wellness_url}}/logs",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planId\": {{planId}},\n  \"logDate\": \"2026-04-29\",\n  \"moodScore\": 4,\n  \"sleepHours\": 7.2,\n  \"waterLiters\": 2.3,\n  \"exerciseMinutes\": 20,\n  \"notes\": \"Felt productive\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Dashboard Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{wellness_url}}/dashboard/summary"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Appointments",
+      "item": [
+        {
+          "name": "Create Slot (Counselor/Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{appointment_url}}/slots",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slotDate\": \"2026-04-30\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"10:30\",\n  \"mode\": \"online\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Slots",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{appointment_url}}/slots"
+          }
+        },
+        {
+          "name": "Book Appointment (Student)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{appointment_url}}/appointments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slotId\": {{slotId}},\n  \"concern\": \"Exam stress and sleep issues\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Appointments",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{appointment_url}}/appointments"
+          }
+        },
+        {
+          "name": "Update Appointment Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{appointment_url}}/appointments/{{appointmentId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\",\n  \"notes\": \"Please join 5 minutes before the session\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

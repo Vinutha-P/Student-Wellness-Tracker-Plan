@@ -1,0 +1,85 @@
+openapi: 3.0.3
+info:
+  title: Student Wellness Appointment Service
+  version: 1.0.0
+servers:
+  - url: http://localhost:4003
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Health check
+      security: []
+      responses:
+        "200": { description: Service healthy }
+  /slots:
+    get:
+      summary: Get counselor slots
+      responses:
+        "200": { description: Slot list }
+    post:
+      summary: Create counselor slot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slotDate, startTime, endTime, mode]
+              properties:
+                slotDate: { type: string, format: date }
+                startTime: { type: string }
+                endTime: { type: string }
+                mode: { type: string, enum: [online, offline] }
+                counselorId: { type: integer, description: required for admin role }
+      responses:
+        "201": { description: Slot created }
+  /appointments:
+    get:
+      summary: Get appointments (role-filtered)
+      responses:
+        "200": { description: Appointments list }
+    post:
+      summary: Book appointment (student)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slotId, concern]
+              properties:
+                slotId: { type: integer }
+                concern: { type: string }
+      responses:
+        "201": { description: Appointment created }
+        "409": { description: Overlapping appointment }
+  /appointments/{id}/status:
+    patch:
+      summary: Update appointment status (counselor/admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [approved, rejected, completed]
+                notes: { type: string }
+      responses:
+        "200": { description: Status updated }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
