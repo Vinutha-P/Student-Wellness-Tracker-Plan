@@ -14,3 +14,15 @@
 | 2026-04-30 | Copilot | "Create Postman collection with environment variables and auth token handling" | Collection skeleton with grouped requests | Yes | Added project-specific variables and test script for token extraction | Faster testing setup for demo readiness |
 | 2026-04-30 | Cursor | "Generate test case checklist for role-based full-stack app" | Functional checklist sections | Partial | Added overlap edge case and slot availability checks | Better mapping of tests to rubric |
 | 2026-04-30 | Claude | "Write concise demo video script for role workflows" | Structured sequence and timing guidance | Yes | Customized with exact project endpoints and docs references | Improved clarity for final presentation |
+| 2026-05-01 | Cursor | "Refactor monolithic App.jsx into reusable React components" | Suggested split into tab/page components with prop contracts | Yes | Created `AuthPage`, `HeaderBar`, `TabsNav`, and per-feature tab components; adjusted prop flow | Better component boundaries and easier maintenance |
+| 2026-05-01 | Copilot | "Improve dashboard look with admin-template style cards and badges" | Proposed UI hierarchy, card emphasis, and status chip styles | Partial | Kept layout ideas, but manually reworked color palette and spacing to fit app semantics | Design suggestions from AI need product-context tuning |
+| 2026-05-01 | Cursor | "Add route-based navigation using React Router for dashboard app" | Route definitions and protected-route strategy | Yes | Implemented route map (`/login`, `/dashboard`, `/plans`, `/logs`, `/appointments`, `/slots`) and redirects | Learned to migrate from tab-state navigation to URL-driven navigation cleanly |
+| 2026-05-01 | Claude | "Review API docs for assignment rubric alignment" | Checklist of missing items in architecture and API docs | Partial | Updated docs with route notes and component hierarchy updates; retained own wording | AI helps detect documentation gaps quickly |
+| 2026-05-02 | Cursor | "Identify accessibility issues in bright dashboard theme" | Contrast and interaction-state recommendations | Partial | Increased text brightness selectively, preserved readable contrast for badges and notices | UX changes must balance visual appeal with readability |
+| 2026-05-02 | Copilot | "Generate sample role-based demo test flow for student/counselor/admin" | Sequential test scenario suggestions | Yes | Converted suggestions into `docs/test-cases.md` checklist and demo script flow | Structured test flows make demo preparation easier |
+
+## Summary of AI-Assisted Work
+
+- **Most useful for:** scaffolding APIs, proposing component structures, and drafting docs/checklists.
+- **Needed manual correction for:** role-specific validation, route wiring details, overlap booking edge cases, and UI consistency.
+- **Overall impact:** reduced development time for boilerplate and increased time available for debugging, integration, and documentation quality.
