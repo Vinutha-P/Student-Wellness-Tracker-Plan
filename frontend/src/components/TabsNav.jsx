@@ -1,4 +1,5 @@
 import { CalendarClock, ClipboardList, HeartPulse, LayoutDashboard, ListChecks } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 const tabIcons = {
   dashboard: LayoutDashboard,
@@ -8,16 +9,16 @@ const tabIcons = {
   slots: HeartPulse,
 };
 
-function TabsNav({ visibleTabs, activeTab, setActiveTab, formatTab }) {
+function TabsNav({ tabs }) {
   return (
     <nav className="tabs glass">
-      {visibleTabs.map((tab) => {
-        const Icon = tabIcons[tab];
+      {tabs.map((tab) => {
+        const Icon = tabIcons[tab.key];
         return (
-          <button key={tab} className={activeTab === tab ? "active" : ""} onClick={() => setActiveTab(tab)}>
+          <NavLink key={tab.key} to={tab.path} className={({ isActive }) => (isActive ? "active" : "")}>
             {Icon ? <Icon size={16} strokeWidth={2.2} /> : null}
-            {formatTab(tab)}
-          </button>
+            {tab.label}
+          </NavLink>
         );
       })}
     </nav>

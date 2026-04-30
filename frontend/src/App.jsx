@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import "./App.css";
 import AuthPage from "./components/AuthPage";
 import HeaderBar from "./components/HeaderBar";
@@ -16,15 +17,14 @@ const APPOINTMENT_API = "http://localhost:4003";
 
 const getAuthHeaders = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
 const prettifyRole = (role) => role.charAt(0).toUpperCase() + role.slice(1);
-const formatTab = (tab) => tab.charAt(0).toUpperCase() + tab.slice(1);
 
 function App() {
+  const navigate = useNavigate();
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem("user");
     return saved ? JSON.parse(saved) : null;
   });
-  const [activeTab, setActiveTab] = useState("dashboard");
   const [authMode, setAuthMode] = useState("login");
   const [authForm, setAuthForm] = useState({ name: "", email: "", password: "", role: "student" });
   const [summary, setSummary] = useState(null);
@@ -65,10 +65,16 @@ function App() {
   const isAdmin = user?.role === "admin";
   const pendingAppointments = appointments.filter((item) => item.status === "pending").length;
 
-  const visibleTabs = useMemo(() => {
-    if (!user) return [];
-    return ["dashboard", "plans", "logs", "appointments", "slots"];
-  }, [user]);
+  const tabs = useMemo(
+    () => [
+      { key: "dashboard", label: "Dashboard", path: "/dashboard" },
+      { key: "plans", label: "Plans", path: "/plans" },
+      { key: "logs", label: "Logs", path: "/logs" },
+      { key: "appointments", label: "Appointments", path: "/appointments" },
+      { key: "slots", label: "Slots", path: "/slots" },
+    ],
+    []
+  );
 
   const clearMessages = () => {
     setStatusMessage("");
@@ -90,6 +96,7 @@ function App() {
       setToken(data.token);
       setUser(data.user);
       setStatusMessage(`Welcome, ${data.user.name}!`);
+      navigate("/dashboard", { replace: true });
     } catch (error) {
       setErrorMessage(error.response?.data?.error || "Authentication failed");
     }
@@ -105,6 +112,7 @@ function App() {
     setSlots([]);
     setAppointments([]);
     setSummary(null);
+    navigate("/login", { replace: true });
   };
 
   const fetchDashboard = async () => {
@@ -200,82 +208,106 @@ function App() {
     }
   };
 
-  if (!user) {
+  if (!user)
     return (
-      <AuthPage
-        authMode={authMode}
-        setAuthMode={setAuthMode}
-        authForm={authForm}
-        setAuthForm={setAuthForm}
-        onAuthSubmit={onAuthSubmit}
-        errorMessage={errorMessage}
-      />
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            <AuthPage
+              authMode={authMode}
+              setAuthMode={setAuthMode}
+              authForm={authForm}
+              setAuthForm={setAuthForm}
+              onAuthSubmit={onAuthSubmit}
+              errorMessage={errorMessage}
+            />
+          }
+        />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
     );
-  }
 
   return (
     <main className="container app-shell">
       <HeaderBar user={user} prettifyRole={prettifyRole} logout={logout} />
-      <TabsNav visibleTabs={visibleTabs} activeTab={activeTab} setActiveTab={setActiveTab} formatTab={formatTab} />
+      <TabsNav tabs={tabs} />
 
       {statusMessage && <p className="notice ok">{statusMessage}</p>}
       {errorMessage && <p className="notice error">{errorMessage}</p>}
 
-      {activeTab === "dashboard" && summary && (
-        <DashboardTab
-          summary={summary}
-          plans={plans}
-          logs={logs}
-          slots={slots}
-          pendingAppointments={pendingAppointments}
+      <Routes>
+        <Route path="/login" element={<Navigate to="/dashboard" replace />} />
+        <Route
+          path="/dashboard"
+          element={
+            summary ? (
+              <DashboardTab
+                summary={summary}
+                plans={plans}
+                logs={logs}
+                slots={slots}
+                pendingAppointments={pendingAppointments}
+              />
+            ) : null
+          }
         />
-      )}
-
-      {activeTab === "plans" && (
-        <PlansTab
-          isStudent={isStudent}
-          planForm={planForm}
-          setPlanForm={setPlanForm}
-          createPlan={createPlan}
-          plans={plans}
+        <Route
+          path="/plans"
+          element={
+            <PlansTab
+              isStudent={isStudent}
+              planForm={planForm}
+              setPlanForm={setPlanForm}
+              createPlan={createPlan}
+              plans={plans}
+            />
+          }
         />
-      )}
-
-      {activeTab === "logs" && (
-        <LogsTab
-          isStudent={isStudent}
-          logForm={logForm}
-          setLogForm={setLogForm}
-          createLog={createLog}
-          plans={plans}
-          logs={logs}
+        <Route
+          path="/logs"
+          element={
+            <LogsTab
+              isStudent={isStudent}
+              logForm={logForm}
+              setLogForm={setLogForm}
+              createLog={createLog}
+              plans={plans}
+              logs={logs}
+            />
+          }
         />
-      )}
-
-      {activeTab === "slots" && (
-        <SlotsTab
-          isCounselor={isCounselor}
-          isAdmin={isAdmin}
-          slotForm={slotForm}
-          setSlotForm={setSlotForm}
-          createSlot={createSlot}
-          slots={slots}
+        <Route
+          path="/appointments"
+          element={
+            <AppointmentsTab
+              isStudent={isStudent}
+              isCounselor={isCounselor}
+              isAdmin={isAdmin}
+              appointmentForm={appointmentForm}
+              setAppointmentForm={setAppointmentForm}
+              bookAppointment={bookAppointment}
+              slots={slots}
+              appointments={appointments}
+              updateAppointmentStatus={updateAppointmentStatus}
+            />
+          }
         />
-      )}
-
-      {activeTab === "appointments" && (
-        <AppointmentsTab
-          isStudent={isStudent}
-          isCounselor={isCounselor}
-          isAdmin={isAdmin}
-          appointmentForm={appointmentForm}
-          setAppointmentForm={setAppointmentForm}
-          bookAppointment={bookAppointment}
-          slots={slots}
-          appointments={appointments}
-          updateAppointmentStatus={updateAppointmentStatus}
+        <Route
+          path="/slots"
+          element={
+            <SlotsTab
+              isCounselor={isCounselor}
+              isAdmin={isAdmin}
+              slotForm={slotForm}
+              setSlotForm={setSlotForm}
+              createSlot={createSlot}
+              slots={slots}
+            />
+          }
         />
-      )}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
     </main>
   );
 }

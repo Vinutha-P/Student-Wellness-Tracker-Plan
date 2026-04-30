@@ -103,7 +103,8 @@
   border-radius: 14px;
 }
 
-button {
+button,
+.tabs a {
   padding: 10px 14px;
   border-radius: 10px;
   border: 1px solid #d4dcf0;
@@ -114,13 +115,17 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  text-decoration: none;
+  color: #1e40af;
 }
 
-button:hover {
+button:hover,
+.tabs a:hover {
   border-color: #98a7c0;
 }
 
-button.active {
+button.active,
+.tabs a.active {
   background: linear-gradient(135deg, #3b82f6, #6366f1);
   color: white;
   border-color: transparent;
