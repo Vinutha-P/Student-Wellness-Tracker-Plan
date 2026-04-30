@@ -1,12 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import "./App.css";
+import AuthPage from "./components/AuthPage";
+import HeaderBar from "./components/HeaderBar";
+import TabsNav from "./components/TabsNav";
+import DashboardTab from "./components/DashboardTab";
+import PlansTab from "./components/PlansTab";
+import LogsTab from "./components/LogsTab";
+import SlotsTab from "./components/SlotsTab";
+import AppointmentsTab from "./components/AppointmentsTab";
 
 const AUTH_API = "http://localhost:4001";
 const WELLNESS_API = "http://localhost:4002";
 const APPOINTMENT_API = "http://localhost:4003";
 
 const getAuthHeaders = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
+const prettifyRole = (role) => role.charAt(0).toUpperCase() + role.slice(1);
+const formatTab = (tab) => tab.charAt(0).toUpperCase() + tab.slice(1);
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
@@ -53,6 +63,7 @@ function App() {
   const isStudent = user?.role === "student";
   const isCounselor = user?.role === "counselor";
   const isAdmin = user?.role === "admin";
+  const pendingAppointments = appointments.filter((item) => item.status === "pending").length;
 
   const visibleTabs = useMemo(() => {
     if (!user) return [];
@@ -191,206 +202,79 @@ function App() {
 
   if (!user) {
     return (
-      <main className="container">
-        <h1>Student Wellness Tracker Plan</h1>
-        <p className="subtitle">Microservice-based platform for wellness plans and counseling appointments.</p>
-        <form className="card form" onSubmit={onAuthSubmit}>
-          <div className="row">
-            <button type="button" onClick={() => setAuthMode("login")} className={authMode === "login" ? "active" : ""}>
-              Login
-            </button>
-            <button type="button" onClick={() => setAuthMode("signup")} className={authMode === "signup" ? "active" : ""}>
-              Signup
-            </button>
-          </div>
-          {authMode === "signup" && (
-            <>
-              <label>Name</label>
-              <input value={authForm.name} onChange={(e) => setAuthForm({ ...authForm, name: e.target.value })} required />
-              <label>Role</label>
-              <select value={authForm.role} onChange={(e) => setAuthForm({ ...authForm, role: e.target.value })}>
-                <option value="student">Student</option>
-                <option value="counselor">Counselor</option>
-                <option value="admin">Admin</option>
-              </select>
-            </>
-          )}
-          <label>Email</label>
-          <input type="email" value={authForm.email} onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })} required />
-          <label>Password</label>
-          <input type="password" value={authForm.password} onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })} required />
-          <button type="submit">{authMode === "login" ? "Login" : "Create account"}</button>
-          {errorMessage && <p className="error">{errorMessage}</p>}
-        </form>
-      </main>
+      <AuthPage
+        authMode={authMode}
+        setAuthMode={setAuthMode}
+        authForm={authForm}
+        setAuthForm={setAuthForm}
+        onAuthSubmit={onAuthSubmit}
+        errorMessage={errorMessage}
+      />
     );
   }
 
   return (
-    <main className="container">
-      <header className="header">
-        <div>
-          <h1>Student Wellness Tracker Plan</h1>
-          <p className="subtitle">
-            Signed in as {user.name} ({user.role})
-          </p>
-        </div>
-        <button onClick={logout}>Logout</button>
-      </header>
+    <main className="container app-shell">
+      <HeaderBar user={user} prettifyRole={prettifyRole} logout={logout} />
+      <TabsNav visibleTabs={visibleTabs} activeTab={activeTab} setActiveTab={setActiveTab} formatTab={formatTab} />
 
-      <nav className="tabs">
-        {visibleTabs.map((tab) => (
-          <button key={tab} className={activeTab === tab ? "active" : ""} onClick={() => setActiveTab(tab)}>
-            {tab}
-          </button>
-        ))}
-      </nav>
-
-      {statusMessage && <p className="ok">{statusMessage}</p>}
-      {errorMessage && <p className="error">{errorMessage}</p>}
+      {statusMessage && <p className="notice ok">{statusMessage}</p>}
+      {errorMessage && <p className="notice error">{errorMessage}</p>}
 
       {activeTab === "dashboard" && summary && (
-        <section className="grid">
-          <article className="card"><h3>Total Plans</h3><p>{summary.totalPlans}</p></article>
-          <article className="card"><h3>Active Plans</h3><p>{summary.activePlans}</p></article>
-          <article className="card"><h3>Total Logs</h3><p>{summary.totalLogs}</p></article>
-          <article className="card"><h3>Average Mood</h3><p>{summary.averageMood}</p></article>
-        </section>
+        <DashboardTab
+          summary={summary}
+          plans={plans}
+          logs={logs}
+          slots={slots}
+          pendingAppointments={pendingAppointments}
+        />
       )}
 
       {activeTab === "plans" && (
-        <section className="grid2">
-          {isStudent && (
-            <form className="card form" onSubmit={createPlan}>
-              <h3>Create Wellness Plan</h3>
-              <input placeholder="Plan title" value={planForm.title} onChange={(e) => setPlanForm({ ...planForm, title: e.target.value })} required />
-              <input placeholder="Category" value={planForm.category} onChange={(e) => setPlanForm({ ...planForm, category: e.target.value })} required />
-              <input type="number" placeholder="Target value" value={planForm.targetValue} onChange={(e) => setPlanForm({ ...planForm, targetValue: Number(e.target.value) })} required />
-              <input placeholder="Unit" value={planForm.unit} onChange={(e) => setPlanForm({ ...planForm, unit: e.target.value })} required />
-              <label>Start date</label>
-              <input type="date" value={planForm.startDate} onChange={(e) => setPlanForm({ ...planForm, startDate: e.target.value })} required />
-              <label>End date</label>
-              <input type="date" value={planForm.endDate} onChange={(e) => setPlanForm({ ...planForm, endDate: e.target.value })} required />
-              <button type="submit">Save plan</button>
-            </form>
-          )}
-          <div className="card">
-            <h3>Plans</h3>
-            <ul className="list">
-              {plans.map((plan) => (
-                <li key={plan.id}>
-                  <strong>{plan.title}</strong> ({plan.category}) - target {plan.target_value} {plan.unit}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
+        <PlansTab
+          isStudent={isStudent}
+          planForm={planForm}
+          setPlanForm={setPlanForm}
+          createPlan={createPlan}
+          plans={plans}
+        />
       )}
 
       {activeTab === "logs" && (
-        <section className="grid2">
-          {isStudent && (
-            <form className="card form" onSubmit={createLog}>
-              <h3>Add Daily Wellness Log</h3>
-              <select value={logForm.planId} onChange={(e) => setLogForm({ ...logForm, planId: Number(e.target.value) })} required>
-                <option value="">Select plan</option>
-                {plans.map((plan) => (
-                  <option value={plan.id} key={plan.id}>
-                    {plan.title}
-                  </option>
-                ))}
-              </select>
-              <label>Date</label>
-              <input type="date" value={logForm.logDate} onChange={(e) => setLogForm({ ...logForm, logDate: e.target.value })} required />
-              <label>Mood score (1-5)</label>
-              <input type="number" min="1" max="5" value={logForm.moodScore} onChange={(e) => setLogForm({ ...logForm, moodScore: Number(e.target.value) })} />
-              <label>Sleep hours</label>
-              <input type="number" value={logForm.sleepHours} onChange={(e) => setLogForm({ ...logForm, sleepHours: Number(e.target.value) })} />
-              <label>Water liters</label>
-              <input type="number" value={logForm.waterLiters} onChange={(e) => setLogForm({ ...logForm, waterLiters: Number(e.target.value) })} />
-              <label>Exercise minutes</label>
-              <input type="number" value={logForm.exerciseMinutes} onChange={(e) => setLogForm({ ...logForm, exerciseMinutes: Number(e.target.value) })} />
-              <textarea placeholder="Notes" value={logForm.notes} onChange={(e) => setLogForm({ ...logForm, notes: e.target.value })} />
-              <button type="submit">Add log</button>
-            </form>
-          )}
-          <div className="card">
-            <h3>Progress Logs</h3>
-            <ul className="list">
-              {logs.map((log) => (
-                <li key={log.id}>
-                  {log.log_date}: mood {log.mood_score}, sleep {log.sleep_hours}h, exercise {log.exercise_minutes}m
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
+        <LogsTab
+          isStudent={isStudent}
+          logForm={logForm}
+          setLogForm={setLogForm}
+          createLog={createLog}
+          plans={plans}
+          logs={logs}
+        />
       )}
 
       {activeTab === "slots" && (
-        <section className="grid2">
-          {(isCounselor || isAdmin) && (
-            <form className="card form" onSubmit={createSlot}>
-              <h3>Create Counseling Slot</h3>
-              <input type="date" value={slotForm.slotDate} onChange={(e) => setSlotForm({ ...slotForm, slotDate: e.target.value })} required />
-              <input type="time" value={slotForm.startTime} onChange={(e) => setSlotForm({ ...slotForm, startTime: e.target.value })} required />
-              <input type="time" value={slotForm.endTime} onChange={(e) => setSlotForm({ ...slotForm, endTime: e.target.value })} required />
-              <select value={slotForm.mode} onChange={(e) => setSlotForm({ ...slotForm, mode: e.target.value })}>
-                <option value="online">Online</option>
-                <option value="offline">Offline</option>
-              </select>
-              <button type="submit">Add slot</button>
-            </form>
-          )}
-          <div className="card">
-            <h3>Available Slots</h3>
-            <ul className="list">
-              {slots.map((slot) => (
-                <li key={slot.id}>
-                  #{slot.id} - {slot.slot_date} {slot.start_time}-{slot.end_time} ({slot.mode})
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
+        <SlotsTab
+          isCounselor={isCounselor}
+          isAdmin={isAdmin}
+          slotForm={slotForm}
+          setSlotForm={setSlotForm}
+          createSlot={createSlot}
+          slots={slots}
+        />
       )}
 
       {activeTab === "appointments" && (
-        <section className="grid2">
-          {isStudent && (
-            <form className="card form" onSubmit={bookAppointment}>
-              <h3>Book Appointment</h3>
-              <select value={appointmentForm.slotId} onChange={(e) => setAppointmentForm({ ...appointmentForm, slotId: Number(e.target.value) })} required>
-                <option value="">Select slot</option>
-                {slots.map((slot) => (
-                  <option key={slot.id} value={slot.id}>
-                    #{slot.id} {slot.slot_date} {slot.start_time}
-                  </option>
-                ))}
-              </select>
-              <textarea placeholder="Concern details" value={appointmentForm.concern} onChange={(e) => setAppointmentForm({ ...appointmentForm, concern: e.target.value })} required />
-              <button type="submit">Request appointment</button>
-            </form>
-          )}
-          <div className="card">
-            <h3>Appointments</h3>
-            <ul className="list">
-              {appointments.map((appointment) => (
-                <li key={appointment.id}>
-                  #{appointment.id} slot {appointment.slot_id} - {appointment.status}
-                  <br />
-                  {appointment.slot_date} {appointment.start_time}-{appointment.end_time}
-                  {(isCounselor || isAdmin) && appointment.status === "pending" && (
-                    <span className="actions">
-                      <button onClick={() => updateAppointmentStatus(appointment.id, "approved")}>Approve</button>
-                      <button onClick={() => updateAppointmentStatus(appointment.id, "rejected")}>Reject</button>
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
+        <AppointmentsTab
+          isStudent={isStudent}
+          isCounselor={isCounselor}
+          isAdmin={isAdmin}
+          appointmentForm={appointmentForm}
+          setAppointmentForm={setAppointmentForm}
+          bookAppointment={bookAppointment}
+          slots={slots}
+          appointments={appointments}
+          updateAppointmentStatus={updateAppointmentStatus}
+        />
       )}
     </main>
   );
